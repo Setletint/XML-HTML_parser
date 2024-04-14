@@ -1,34 +1,68 @@
 <?php
+
 $input = trim(fgets(STDIN));
-$tagPattern = "/(<[^>]*>)/";
-$inputArray = preg_split($tagPattern, $input, 0, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
+function custom_split($input) {
+    $result = [];
+    $tag = '';
+    $currentText = '';
+    $insideTag = false;
+
+    for ($i = 0; $i < strlen($input); $i++) {
+        if ($input[$i] === '<') {
+            $insideTag = true;
+            if ($currentText !== '') {
+                $result[] = $currentText;
+                $currentText = '';
+            }
+            $tag = '<';
+        } elseif ($input[$i] === '>') {
+            $insideTag = false;
+            $tag .= '>';
+            $result[] = $tag;
+            $tag = '';
+        } else {
+            if ($insideTag) {
+                $tag .= $input[$i];
+            } else {
+                $currentText .= $input[$i];
+            }
+        }
+    }
+
+    if ($currentText !== '') {
+        $result[] = $currentText;
+    }
+
+    return $result;
+}
+
+$inputArray = custom_split($input);
 $result = "";
-$amountOfTags = 0;
 $spaceLevel = 0;
-
 $isNotClosing = true;
-$isPrevText = false;
 $isPrevOpeningTag = false;
 
 foreach ($inputArray as $v) {
     $v = ltrim($v);
-    if (preg_match("#<[^>/]*>#", $v)) {
-        $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
-        $spaceLevel++;
-        $openingTags = $v;
-        $isNotClosing = true;
-        $isPrevOpeningTag = true;
-    } else if (preg_match("/(<[^>]*>)/", $v) && $isNotClosing) {
-        $spaceLevel--;
-        $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
-        $isPrevOpeningTag = false;
-    } else if (!$isNotClosing) {
-        $spaceLevel--;
-        $result .= $v . "\n";
-        $isNotClosing = true;
-        $isPrevOpeningTag = false;
+
+    // Check if $v starts with '<' and ends with '>'
+    if ($v[0] === '<' && $v[strlen($v) - 1] === '>') {
+        // Opening tag
+        if ($v[1] !== '/') {
+            $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
+            $spaceLevel++;
+            $isNotClosing = true;
+            $isPrevOpeningTag = true;
+        }
+        // Closing tag
+        else {
+            $spaceLevel--;
+            $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
+            $isPrevOpeningTag = false;
+        }
     } else {
+        // Text between tags
         if ($isPrevOpeningTag) {
             $result = rtrim($result, "\n");
             $result .= $v;
@@ -38,4 +72,5 @@ foreach ($inputArray as $v) {
         }
     }
 }
+
 echo ($result);
