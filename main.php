@@ -1,8 +1,11 @@
 <?php
 
-$input = trim(fgets(STDIN));
+$inputString = trim(fgets(STDIN));
 
-function custom_split($input) {
+print(format_XML_HTML($inputString));
+
+function custom_split($input)
+{
     $result = [];
     $tag = '';
     $currentText = '';
@@ -37,40 +40,51 @@ function custom_split($input) {
     return $result;
 }
 
-$inputArray = custom_split($input);
-$result = "";
-$spaceLevel = 0;
-$isNotClosing = true;
-$isPrevOpeningTag = false;
 
-foreach ($inputArray as $v) {
-    $v = ltrim($v);
+function format_XML_HTML($input)
+{
+    $inputArray = custom_split($input);
+    $result = "";
+    $spaceLevel = 0;
+    $isNotClosing = true;
+    $shouldMakeSpace = false;
+    $isPrevOpeningTag = false;
 
-    // Check if $v starts with '<' and ends with '>'
-    if ($v[0] === '<' && $v[strlen($v) - 1] === '>') {
-        // Opening tag
-        if ($v[1] !== '/') {
-            $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
-            $spaceLevel++;
-            $isNotClosing = true;
-            $isPrevOpeningTag = true;
-        }
-        // Closing tag
-        else {
-            $spaceLevel--;
-            $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
-            $isPrevOpeningTag = false;
-        }
-    } else {
-        // Text between tags
-        if ($isPrevOpeningTag) {
-            $result = rtrim($result, "\n");
-            $result .= $v;
-            $isNotClosing = false;
+    foreach ($inputArray as $v) {
+        $v = ltrim($v);
+
+        // Check if $v starts with '<' and ends with '>'
+        if ($v[0] === '<' && $v[strlen($v) - 1] === '>') {
+            // Opening tag
+            if ($v[1] !== '/') {
+                $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
+                $spaceLevel++;
+                $isNotClosing = true;
+                $isPrevOpeningTag = true;
+            }
+            // Closing tag
+            else {
+                $spaceLevel--;
+                if ($shouldMakeSpace) {
+                    $result .= $v . "\n";
+                    $shouldMakeSpace = false;
+                } else {
+                    $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
+                }
+                $isPrevOpeningTag = false;
+            }
         } else {
-            $result .= str_repeat("  ", $spaceLevel) . $v . "\n";
+            // Text between tags
+            if ($isPrevOpeningTag) {
+
+                $result = rtrim($result, "\n");
+                $result .= $v;
+                $isNotClosing = false;
+                $shouldMakeSpace = true;
+            } else {
+                $result .= $v . "\n";
+            }
         }
     }
+    return $result;
 }
-
-echo ($result);

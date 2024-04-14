@@ -1,0 +1,9 @@
+# Composer dependencies
+/vendor/
+
+# PHPUnit generated files
+/phpunit.xml
+/phpunit.xml.dist
+
+# PHPUnit coverage reports
+/build/
